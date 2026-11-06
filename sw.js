@@ -1,5 +1,5 @@
-const C='mz-v1';
-self.addEventListener('install',e=>{self.skipWaiting()});
-self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+const C='mz-v2',OWN=['./','index.html','fb-adapter.js','manifest.webmanifest','icon-192.png','icon-512.png'],SDK=['app','firestore','auth'].map(n=>'https://www.gstatic.com/firebasejs/10.12.2/firebase-'+n+'-compat.js');
+self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(async c=>{await Promise.all(OWN.map(u=>c.add(u).catch(()=>{})));await Promise.all(SDK.map(u=>fetch(u,{mode:'no-cors'}).then(r=>c.put(u,r)).catch(()=>{})))}))});
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(!(u.origin===location.origin||u.host==='www.gstatic.com'))return;
-e.respondWith(caches.open(C).then(async c=>{const m=await c.match(e.request,{ignoreSearch:true});const f=fetch(e.request).then(r=>{if(r&&(r.ok||r.type==='opaque'))c.put(e.request,r.clone());return r}).catch(()=>m);return m||f}))});
+e.respondWith(caches.open(C).then(async c=>{let m=await c.match(e.request,{ignoreSearch:true});if(!m&&e.request.mode==='navigate')m=await c.match('index.html');const f=fetch(e.request).then(r=>{if(r&&(r.ok||r.type==='opaque'))c.put(e.request,r.clone());return r}).catch(()=>m);return m||f}))});
